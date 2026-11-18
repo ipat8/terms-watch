@@ -1,0 +1,24 @@
+{
+  "name": "term-watch",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/server/index.ts --bundle --platform=node --format=cjs --target=node22 --outfile=dist/server/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types src/server/match.test.ts",
+    "dev": "devvit playtest",
+    "deploy": "devvit upload",
+    "launch": "devvit publish"
+  },
+  "dependencies": {
+    "@devvit/web": "0.15.0"
+  },
+  "devDependencies": {
+    "devvit": "0.15.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  },
+  "license": "BSD-3-Clause"
+}

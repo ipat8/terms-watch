@@ -1,0 +1,71 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "term-watch",
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.js"
+  },
+  "permissions": {
+    "http": {
+      "enable": true,
+      "domains": [
+        "discord.com",
+        "discordapp.com",
+        "raw.githubusercontent.com"
+      ]
+    },
+    "redis": true
+  },
+  "triggers": {
+    "onPostSubmit": "/internal/on-post-submit",
+    "onCommentSubmit": "/internal/on-comment-submit"
+  },
+  "settings": {
+    "subreddit": {
+      "discordWebhookUrl": {
+        "type": "string",
+        "label": "Discord webhook URL",
+        "helpText": "Webhook for the Discord channel that should receive alerts, e.g. https://discord.com/api/webhooks/…",
+        "placeholder": "https://discord.com/api/webhooks/…",
+        "validationEndpoint": "/internal/settings/validate-webhook-url"
+      },
+      "termsUrl": {
+        "type": "string",
+        "label": "Terms list URL",
+        "helpText": "HTTPS URL that returns the watch terms: a JSON array (e.g. [\"sublink\", \"gift code\"]) or one term per line / comma-separated. The URL's domain must be listed under permissions.http.domains in devvit.json.",
+        "placeholder": "https://raw.githubusercontent.com/you/repo/main/terms.txt",
+        "validationEndpoint": "/internal/settings/validate-terms-url"
+      },
+      "wholeWord": {
+        "type": "boolean",
+        "label": "Whole-word matching",
+        "helpText": "On: \"sublink\" won't match \"sublinked\".",
+        "defaultValue": true
+      },
+      "caseSensitive": {
+        "type": "boolean",
+        "label": "Case sensitive",
+        "defaultValue": false
+      },
+      "ignoreAuthors": {
+        "type": "string",
+        "label": "Ignore these usernames",
+        "helpText": "Comma-separated, no u/ prefix.",
+        "defaultValue": "AutoModerator"
+      },
+      "mention": {
+        "type": "string",
+        "label": "Discord mention (optional)",
+        "helpText": "e.g. <@&ROLE_ID> or <@USER_ID>. Leave blank for no ping.",
+        "defaultValue": ""
+      }
+    }
+  },
+  "scripts": {
+    "dev": "npm run build -- --watch",
+    "build": "npm run build"
+  },
+  "dev": {
+    "subreddit": "term_watch_dev"
+  }
+}
