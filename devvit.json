@@ -11,7 +11,10 @@
       "domains": [
         "discord.com",
         "discordapp.com",
-        "raw.githubusercontent.com"
+        "raw.githubusercontent.com",
+        "pastebin.com",
+        "ched.tv",
+        "paste.ipat8.com"
       ]
     },
     "redis": true

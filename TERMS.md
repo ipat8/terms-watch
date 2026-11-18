@@ -59,4 +59,4 @@ date in the app's public repository.
 
 ## Contact
 
-[CONTACT EMAIL OR REDDIT USERNAME]
+legal@mediacrew.dev

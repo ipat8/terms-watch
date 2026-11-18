@@ -15,10 +15,10 @@
     "@devvit/web": "0.15.0"
   },
   "devDependencies": {
-    "devvit": "0.15.0",
+    "@types/node": "^22.0.0",
+    "devvit": "^0.15.4",
     "esbuild": "^0.25.0",
-    "typescript": "^5.6.0",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.6.0"
   },
   "license": "BSD-3-Clause"
 }
