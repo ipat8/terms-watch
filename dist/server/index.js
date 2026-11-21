@@ -9303,21 +9303,13 @@ var createServer = (optionsOrRequestListener, requestListener) => {
 function _createServer(options, requestListener) {
   globalThis.devvit ?? (globalThis.devvit = {});
   globalThis.devvit.metadataProvider = getMetadata;
-  const server2 = (0, import_node_http.createServer)(options, async (req, res) => {
+  return (0, import_node_http.createServer)(options, async (req, res) => {
     const context2 = Context(req.headers);
     return runWithContext(context2, async () => {
       setContextCache(userProgressStateHeader, createUserProgressNotifier(res));
       return requestListener?.(req, res);
     });
   });
-  const originalListen = server2.listen.bind(server2);
-  server2.listen = (...args) => {
-    if (globalThis.enableWebbitBundlingHack) {
-      return server2;
-    }
-    return originalListen(...args);
-  };
-  return server2;
 }
 
 // node_modules/@devvit/shared-types/server/get-server-port.js
@@ -28992,13 +28984,19 @@ var InstallationContext = {
 };
 messageTypeRegistry.set(InstallationContext.$type, InstallationContext);
 function createBaseSystemContext() {
-  return { redisCluster: void 0 };
+  return { redisCluster: void 0, installationRedisQuotaMb: void 0, globalRedisQuotaMb: void 0 };
 }
 var SystemContext = {
   $type: "devvit.platform.v1.SystemContext",
   encode(message, writer = import_minimal26.default.Writer.create()) {
     if (message.redisCluster !== void 0) {
       writer.uint32(10).string(message.redisCluster);
+    }
+    if (message.installationRedisQuotaMb !== void 0) {
+      writer.uint32(16).int32(message.installationRedisQuotaMb);
+    }
+    if (message.globalRedisQuotaMb !== void 0) {
+      writer.uint32(24).int32(message.globalRedisQuotaMb);
     }
     return writer;
   },
@@ -29015,6 +29013,18 @@ var SystemContext = {
           }
           message.redisCluster = reader.string();
           continue;
+        case 2:
+          if (tag !== 16) {
+            break;
+          }
+          message.installationRedisQuotaMb = reader.int32();
+          continue;
+        case 3:
+          if (tag !== 24) {
+            break;
+          }
+          message.globalRedisQuotaMb = reader.int32();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -29024,12 +29034,22 @@ var SystemContext = {
     return message;
   },
   fromJSON(object) {
-    return { redisCluster: isSet22(object.redisCluster) ? globalThis.String(object.redisCluster) : void 0 };
+    return {
+      redisCluster: isSet22(object.redisCluster) ? globalThis.String(object.redisCluster) : void 0,
+      installationRedisQuotaMb: isSet22(object.installationRedisQuotaMb) ? globalThis.Number(object.installationRedisQuotaMb) : void 0,
+      globalRedisQuotaMb: isSet22(object.globalRedisQuotaMb) ? globalThis.Number(object.globalRedisQuotaMb) : void 0
+    };
   },
   toJSON(message) {
     const obj = {};
     if (message.redisCluster !== void 0) {
       obj.redisCluster = message.redisCluster;
+    }
+    if (message.installationRedisQuotaMb !== void 0) {
+      obj.installationRedisQuotaMb = Math.round(message.installationRedisQuotaMb);
+    }
+    if (message.globalRedisQuotaMb !== void 0) {
+      obj.globalRedisQuotaMb = Math.round(message.globalRedisQuotaMb);
     }
     return obj;
   },
@@ -29039,6 +29059,8 @@ var SystemContext = {
   fromPartial(object) {
     const message = createBaseSystemContext();
     message.redisCluster = object.redisCluster ?? void 0;
+    message.installationRedisQuotaMb = object.installationRedisQuotaMb ?? void 0;
+    message.globalRedisQuotaMb = object.globalRedisQuotaMb ?? void 0;
     return message;
   }
 };
@@ -30906,7 +30928,8 @@ function createBaseDevvitPost() {
     webViewClientData: void 0,
     signedRequestContext: "",
     entrypointHeight: 0,
-    styles: void 0
+    styles: void 0,
+    rtjsonFallback: void 0
   };
 }
 var DevvitPost = {
@@ -30953,6 +30976,9 @@ var DevvitPost = {
     }
     if (message.styles !== void 0) {
       CustomPostStyles.encode(message.styles, writer.uint32(114).fork()).ldelim();
+    }
+    if (message.rtjsonFallback !== void 0) {
+      writer.uint32(122).string(message.rtjsonFallback);
     }
     return writer;
   },
@@ -31047,6 +31073,12 @@ var DevvitPost = {
           }
           message.styles = CustomPostStyles.decode(reader, reader.uint32());
           continue;
+        case 15:
+          if (tag !== 122) {
+            break;
+          }
+          message.rtjsonFallback = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -31070,7 +31102,8 @@ var DevvitPost = {
       webViewClientData: isObject11(object.webViewClientData) ? object.webViewClientData : void 0,
       signedRequestContext: isSet28(object.signedRequestContext) ? globalThis.String(object.signedRequestContext) : "",
       entrypointHeight: isSet28(object.entrypointHeight) ? entrypointHeightFromJSON(object.entrypointHeight) : 0,
-      styles: isSet28(object.styles) ? CustomPostStyles.fromJSON(object.styles) : void 0
+      styles: isSet28(object.styles) ? CustomPostStyles.fromJSON(object.styles) : void 0,
+      rtjsonFallback: isSet28(object.rtjsonFallback) ? globalThis.String(object.rtjsonFallback) : void 0
     };
   },
   toJSON(message) {
@@ -31117,6 +31150,9 @@ var DevvitPost = {
     if (message.styles !== void 0) {
       obj.styles = CustomPostStyles.toJSON(message.styles);
     }
+    if (message.rtjsonFallback !== void 0) {
+      obj.rtjsonFallback = message.rtjsonFallback;
+    }
     return obj;
   },
   create(base) {
@@ -31138,6 +31174,7 @@ var DevvitPost = {
     message.signedRequestContext = object.signedRequestContext ?? "";
     message.entrypointHeight = object.entrypointHeight ?? 0;
     message.styles = object.styles !== void 0 && object.styles !== null ? CustomPostStyles.fromPartial(object.styles) : void 0;
+    message.rtjsonFallback = object.rtjsonFallback ?? void 0;
     return message;
   }
 };
@@ -31356,7 +31393,10 @@ function createBaseCreateDevvitPostRequest() {
     userGeneratedContent: void 0,
     isNsfw: false,
     postData: void 0,
-    styles: void 0
+    styles: void 0,
+    flairId: void 0,
+    flairText: void 0,
+    isSpoiler: false
   };
 }
 var CreateDevvitPostRequest = {
@@ -31403,6 +31443,15 @@ var CreateDevvitPostRequest = {
     }
     if (message.styles !== void 0) {
       CustomPostStyles.encode(message.styles, writer.uint32(114).fork()).ldelim();
+    }
+    if (message.flairId !== void 0) {
+      writer.uint32(122).string(message.flairId);
+    }
+    if (message.flairText !== void 0) {
+      writer.uint32(130).string(message.flairText);
+    }
+    if (message.isSpoiler !== false) {
+      writer.uint32(136).bool(message.isSpoiler);
     }
     return writer;
   },
@@ -31497,6 +31546,24 @@ var CreateDevvitPostRequest = {
           }
           message.styles = CustomPostStyles.decode(reader, reader.uint32());
           continue;
+        case 15:
+          if (tag !== 122) {
+            break;
+          }
+          message.flairId = reader.string();
+          continue;
+        case 16:
+          if (tag !== 130) {
+            break;
+          }
+          message.flairText = reader.string();
+          continue;
+        case 17:
+          if (tag !== 136) {
+            break;
+          }
+          message.isSpoiler = reader.bool();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -31520,7 +31587,10 @@ var CreateDevvitPostRequest = {
       userGeneratedContent: isSet28(object.userGeneratedContent) ? UserGeneratedContent2.fromJSON(object.userGeneratedContent) : void 0,
       isNsfw: isSet28(object.isNsfw) ? globalThis.Boolean(object.isNsfw) : false,
       postData: isObject11(object.postData) ? object.postData : void 0,
-      styles: isSet28(object.styles) ? CustomPostStyles.fromJSON(object.styles) : void 0
+      styles: isSet28(object.styles) ? CustomPostStyles.fromJSON(object.styles) : void 0,
+      flairId: isSet28(object.flairId) ? globalThis.String(object.flairId) : void 0,
+      flairText: isSet28(object.flairText) ? globalThis.String(object.flairText) : void 0,
+      isSpoiler: isSet28(object.isSpoiler) ? globalThis.Boolean(object.isSpoiler) : false
     };
   },
   toJSON(message) {
@@ -31567,6 +31637,15 @@ var CreateDevvitPostRequest = {
     if (message.styles !== void 0) {
       obj.styles = CustomPostStyles.toJSON(message.styles);
     }
+    if (message.flairId !== void 0) {
+      obj.flairId = message.flairId;
+    }
+    if (message.flairText !== void 0) {
+      obj.flairText = message.flairText;
+    }
+    if (message.isSpoiler !== false) {
+      obj.isSpoiler = message.isSpoiler;
+    }
     return obj;
   },
   create(base) {
@@ -31588,6 +31667,9 @@ var CreateDevvitPostRequest = {
     message.isNsfw = object.isNsfw ?? false;
     message.postData = object.postData ?? void 0;
     message.styles = object.styles !== void 0 && object.styles !== null ? CustomPostStyles.fromPartial(object.styles) : void 0;
+    message.flairId = object.flairId ?? void 0;
+    message.flairText = object.flairText ?? void 0;
+    message.isSpoiler = object.isSpoiler ?? false;
     return message;
   }
 };
@@ -34811,7 +34893,7 @@ var WebViewContext = {
 };
 messageTypeRegistry.set(WebViewContext.$type, WebViewContext);
 function createBaseDevvitPostData() {
-  return { splash: void 0, developerData: void 0 };
+  return { splash: void 0, developerData: void 0, clientData: void 0 };
 }
 var DevvitPostData = {
   $type: "devvit.ui.effects.web_view.v1alpha.DevvitPostData",
@@ -34821,6 +34903,9 @@ var DevvitPostData = {
     }
     if (message.developerData !== void 0) {
       Struct.encode(Struct.wrap(message.developerData), writer.uint32(18).fork()).ldelim();
+    }
+    if (message.clientData !== void 0) {
+      Struct.encode(Struct.wrap(message.clientData), writer.uint32(34).fork()).ldelim();
     }
     return writer;
   },
@@ -34843,6 +34928,12 @@ var DevvitPostData = {
           }
           message.developerData = Struct.unwrap(Struct.decode(reader, reader.uint32()));
           continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+          message.clientData = Struct.unwrap(Struct.decode(reader, reader.uint32()));
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -34854,7 +34945,8 @@ var DevvitPostData = {
   fromJSON(object) {
     return {
       splash: isSet32(object.splash) ? SplashPostData.fromJSON(object.splash) : void 0,
-      developerData: isObject13(object.developerData) ? object.developerData : void 0
+      developerData: isObject13(object.developerData) ? object.developerData : void 0,
+      clientData: isObject13(object.clientData) ? object.clientData : void 0
     };
   },
   toJSON(message) {
@@ -34865,6 +34957,9 @@ var DevvitPostData = {
     if (message.developerData !== void 0) {
       obj.developerData = message.developerData;
     }
+    if (message.clientData !== void 0) {
+      obj.clientData = message.clientData;
+    }
     return obj;
   },
   create(base) {
@@ -34874,6 +34969,7 @@ var DevvitPostData = {
     const message = createBaseDevvitPostData();
     message.splash = object.splash !== void 0 && object.splash !== null ? SplashPostData.fromPartial(object.splash) : void 0;
     message.developerData = object.developerData ?? void 0;
+    message.clientData = object.clientData ?? void 0;
     return message;
   }
 };
@@ -36798,74 +36894,6 @@ var SubmitRequest = {
   }
 };
 messageTypeRegistry.set(SubmitRequest.$type, SubmitRequest);
-function createBaseVoteRequest() {
-  return { dir: 0, id: "" };
-}
-var VoteRequest = {
-  $type: "devvit.plugin.redditapi.linksandcomments.VoteRequest",
-  encode(message, writer = import_minimal37.default.Writer.create()) {
-    if (message.dir !== 0) {
-      writer.uint32(8).int32(message.dir);
-    }
-    if (message.id !== "") {
-      writer.uint32(18).string(message.id);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof import_minimal37.default.Reader ? input : import_minimal37.default.Reader.create(input);
-    let end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseVoteRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 8) {
-            break;
-          }
-          message.dir = reader.int32();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-          message.id = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return {
-      dir: isSet33(object.dir) ? globalThis.Number(object.dir) : 0,
-      id: isSet33(object.id) ? globalThis.String(object.id) : ""
-    };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.dir !== 0) {
-      obj.dir = Math.round(message.dir);
-    }
-    if (message.id !== "") {
-      obj.id = message.id;
-    }
-    return obj;
-  },
-  create(base) {
-    return VoteRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseVoteRequest();
-    message.dir = object.dir ?? 0;
-    message.id = object.id ?? "";
-    return message;
-  }
-};
-messageTypeRegistry.set(VoteRequest.$type, VoteRequest);
 function createBaseEditCustomPostRequest() {
   return { thingId: "", richtextFallback: void 0, postData: void 0, runAs: 0 };
 }
@@ -38114,16 +38142,7 @@ var LinksAndCommentsDefinition = {
       requestStream: false,
       responseType: Empty,
       responseStream: false,
-      options: {
-        _unknownFields: {
-          480010: [
-            new Uint8Array([6, 10, 4, 80, 79, 83, 84]),
-            new Uint8Array([10, 18, 8, 47, 97, 112, 105, 47, 100, 101, 108]),
-            new Uint8Array([2, 24, 4]),
-            new Uint8Array([4, 50, 2, 105, 100])
-          ]
-        }
-      }
+      options: {}
     },
     /**
      * Edit the body text of a Comment or Post
@@ -38174,16 +38193,7 @@ var LinksAndCommentsDefinition = {
       requestStream: false,
       responseType: Empty,
       responseStream: false,
-      options: {
-        _unknownFields: {
-          480010: [
-            new Uint8Array([6, 10, 4, 80, 79, 83, 84]),
-            new Uint8Array([11, 18, 9, 47, 97, 112, 105, 47, 104, 105, 100, 101]),
-            new Uint8Array([2, 24, 4]),
-            new Uint8Array([4, 50, 2, 105, 100])
-          ]
-        }
-      }
+      options: {}
     },
     /**
      * Get one or more things by ID, Subreddit name, or Link Post URL
@@ -38817,16 +38827,7 @@ var LinksAndCommentsDefinition = {
       requestStream: false,
       responseType: Empty,
       responseStream: false,
-      options: {
-        _unknownFields: {
-          480010: [
-            new Uint8Array([6, 10, 4, 80, 79, 83, 84]),
-            new Uint8Array([13, 18, 11, 47, 97, 112, 105, 47, 117, 110, 104, 105, 100, 101]),
-            new Uint8Array([2, 24, 4]),
-            new Uint8Array([4, 50, 2, 105, 100])
-          ]
-        }
-      }
+      options: {}
     },
     /**
      * Enable comments for a Post or Comment
@@ -38915,28 +38916,6 @@ var LinksAndCommentsDefinition = {
           480010: [
             new Uint8Array([6, 10, 4, 80, 79, 83, 84]),
             new Uint8Array([16, 18, 14, 47, 97, 112, 105, 47, 117, 110, 115, 112, 111, 105, 108, 101, 114]),
-            new Uint8Array([2, 24, 4]),
-            new Uint8Array([4, 50, 2, 105, 100])
-          ]
-        }
-      }
-    },
-    /**
-     * Vote or clear a vote on a Post or Comment
-     *
-     * @see {@link https://www.reddit.com/dev/api#POST_api_vote}
-     */
-    vote: {
-      name: "Vote",
-      requestType: VoteRequest,
-      requestStream: false,
-      responseType: Empty,
-      responseStream: false,
-      options: {
-        _unknownFields: {
-          480010: [
-            new Uint8Array([6, 10, 4, 80, 79, 83, 84]),
-            new Uint8Array([11, 18, 9, 47, 97, 112, 105, 47, 118, 111, 116, 101]),
             new Uint8Array([2, 24, 4]),
             new Uint8Array([4, 50, 2, 105, 100])
           ]
@@ -52661,70 +52640,14 @@ var NewModmailDefinition = {
         }
       }
     },
-    /** https://www.reddit.com/dev/api#GET_api_mod_conversations_:conversation_id_user */
+    /** Returns the user participant's information from GetConversation. */
     userConversations: {
       name: "UserConversations",
       requestType: BasicConversationRequest,
       requestStream: false,
       responseType: ConversationUserData,
       responseStream: false,
-      options: {
-        _unknownFields: {
-          480010: [
-            new Uint8Array([5, 10, 3, 71, 69, 84]),
-            new Uint8Array([
-              47,
-              18,
-              45,
-              47,
-              97,
-              112,
-              105,
-              47,
-              109,
-              111,
-              100,
-              47,
-              99,
-              111,
-              110,
-              118,
-              101,
-              114,
-              115,
-              97,
-              116,
-              105,
-              111,
-              110,
-              115,
-              47,
-              123,
-              99,
-              111,
-              110,
-              118,
-              101,
-              114,
-              115,
-              97,
-              116,
-              105,
-              111,
-              110,
-              95,
-              105,
-              100,
-              125,
-              47,
-              117,
-              115,
-              101,
-              114
-            ])
-          ]
-        }
-      }
+      options: {}
     },
     /** https://www.reddit.com/dev/api#POST_api_mod_conversations_read */
     read: {
@@ -71476,58 +71399,6 @@ var UserDataByAccountIdsRequest = {
   }
 };
 messageTypeRegistry.set(UserDataByAccountIdsRequest.$type, UserDataByAccountIdsRequest);
-function createBaseUsernameAvailableRequest() {
-  return { user: "" };
-}
-var UsernameAvailableRequest = {
-  $type: "devvit.plugin.redditapi.users.UsernameAvailableRequest",
-  encode(message, writer = import_minimal51.default.Writer.create()) {
-    if (message.user !== "") {
-      writer.uint32(10).string(message.user);
-    }
-    return writer;
-  },
-  decode(input, length) {
-    const reader = input instanceof import_minimal51.default.Reader ? input : import_minimal51.default.Reader.create(input);
-    let end = length === void 0 ? reader.len : reader.pos + length;
-    const message = createBaseUsernameAvailableRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-          message.user = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-  fromJSON(object) {
-    return { user: isSet40(object.user) ? globalThis.String(object.user) : "" };
-  },
-  toJSON(message) {
-    const obj = {};
-    if (message.user !== "") {
-      obj.user = message.user;
-    }
-    return obj;
-  },
-  create(base) {
-    return UsernameAvailableRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object) {
-    const message = createBaseUsernameAvailableRequest();
-    message.user = object.user ?? "";
-    return message;
-  }
-};
-messageTypeRegistry.set(UsernameAvailableRequest.$type, UsernameAvailableRequest);
 function createBaseUpdateFriendRelationshipRequest() {
   return { name: "", note: "" };
 }
@@ -71648,6 +71519,110 @@ var UserAboutRequest = {
   }
 };
 messageTypeRegistry.set(UserAboutRequest.$type, UserAboutRequest);
+function createBaseGetSnoovatarUrlRequest() {
+  return { username: "" };
+}
+var GetSnoovatarUrlRequest = {
+  $type: "devvit.plugin.redditapi.users.GetSnoovatarUrlRequest",
+  encode(message, writer = import_minimal51.default.Writer.create()) {
+    if (message.username !== "") {
+      writer.uint32(10).string(message.username);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof import_minimal51.default.Reader ? input : import_minimal51.default.Reader.create(input);
+    let end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseGetSnoovatarUrlRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+          message.username = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { username: isSet40(object.username) ? globalThis.String(object.username) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.username !== "") {
+      obj.username = message.username;
+    }
+    return obj;
+  },
+  create(base) {
+    return GetSnoovatarUrlRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseGetSnoovatarUrlRequest();
+    message.username = object.username ?? "";
+    return message;
+  }
+};
+messageTypeRegistry.set(GetSnoovatarUrlRequest.$type, GetSnoovatarUrlRequest);
+function createBaseGetSnoovatarUrlResponse() {
+  return { url: "" };
+}
+var GetSnoovatarUrlResponse = {
+  $type: "devvit.plugin.redditapi.users.GetSnoovatarUrlResponse",
+  encode(message, writer = import_minimal51.default.Writer.create()) {
+    if (message.url !== "") {
+      writer.uint32(10).string(message.url);
+    }
+    return writer;
+  },
+  decode(input, length) {
+    const reader = input instanceof import_minimal51.default.Reader ? input : import_minimal51.default.Reader.create(input);
+    let end = length === void 0 ? reader.len : reader.pos + length;
+    const message = createBaseGetSnoovatarUrlResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+          message.url = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+  fromJSON(object) {
+    return { url: isSet40(object.url) ? globalThis.String(object.url) : "" };
+  },
+  toJSON(message) {
+    const obj = {};
+    if (message.url !== "") {
+      obj.url = message.url;
+    }
+    return obj;
+  },
+  create(base) {
+    return GetSnoovatarUrlResponse.fromPartial(base ?? {});
+  },
+  fromPartial(object) {
+    const message = createBaseGetSnoovatarUrlResponse();
+    message.url = object.url ?? "";
+    return message;
+  }
+};
+messageTypeRegistry.set(GetSnoovatarUrlResponse.$type, GetSnoovatarUrlResponse);
 function createBaseUserWhereRequest() {
   return {
     context: void 0,
@@ -73162,62 +73137,6 @@ var UsersDefinition = {
       responseStream: false,
       options: {}
     },
-    /** https://www.reddit.com/dev/api#GET_api_username_available */
-    usernameAvailable: {
-      name: "UsernameAvailable",
-      requestType: UsernameAvailableRequest,
-      requestStream: false,
-      responseType: BoolValue,
-      responseStream: false,
-      options: {
-        _unknownFields: {
-          480010: [
-            new Uint8Array([5, 10, 3, 71, 69, 84]),
-            new Uint8Array([
-              37,
-              18,
-              35,
-              47,
-              97,
-              112,
-              105,
-              47,
-              117,
-              115,
-              101,
-              114,
-              110,
-              97,
-              109,
-              101,
-              95,
-              97,
-              118,
-              97,
-              105,
-              108,
-              97,
-              98,
-              108,
-              101,
-              63,
-              117,
-              115,
-              101,
-              114,
-              61,
-              123,
-              117,
-              115,
-              101,
-              114,
-              125
-            ]),
-            new Uint8Array([2, 64, 1])
-          ]
-        }
-      }
-    },
     /** https://www.reddit.com/dev/api#DELETE_api_v1_me_friends_username */
     unfriendUser: {
       name: "UnfriendUser",
@@ -73653,6 +73572,15 @@ var UsersDefinition = {
       requestType: GetUserKarmaForSubredditRequest,
       requestStream: false,
       responseType: GetUserKarmaForSubredditResponse,
+      responseStream: false,
+      options: {}
+    },
+    /** Returns a user's Snoovatar image URL when one is set. */
+    getSnoovatarUrl: {
+      name: "GetSnoovatarUrl",
+      requestType: GetSnoovatarUrlRequest,
+      requestStream: false,
+      responseType: GetSnoovatarUrlResponse,
       responseStream: false,
       options: {}
     }
@@ -84337,9 +84265,10 @@ var Post = class _Post {
     __classPrivateFieldSet7(this, _Post_removed, false, "f");
   }
   /**
-   * Filters a post. When a post is filtered, it is added to the ModQueue for review, and in addition:
-   * - if @param options.keep is `false`, the post stops being in displayed the subreddit
-   * - if @param options.keep is `true`, the post is still displayed in the subreddit
+   * Filters a post. When a post is filtered, it is added to the ModQueue for
+   * review. By default, filtered posts are hidden while in the queue. Set
+   * `keep` to `true` to keep the post visible. Set `reason` to show moderators
+   * a reason; when `keep` is `true`, the reason is also shown on the post.
    *
    * @experimental
    */
@@ -85515,6 +85444,12 @@ var User2 = class {
     });
     return userFlairs.users[0] ? convertUserFlairProtoToAPI(userFlairs.users[0]) : void 0;
   }
+  /**
+   * Gets this user's public Snoovatar image URL.
+   *
+   * @returns The image URL, or `undefined` if this user has no Snoovatar image.
+   * @throws If the account is unavailable or the lookup fails.
+   */
   getSnoovatarUrl() {
     return _a4.getSnoovatarUrl(this.username);
   }
@@ -85648,10 +85583,8 @@ var User2 = class {
         return snoovatarUrl;
       }
     }
-    const operationName = "GetSnoovatarUrlByName";
-    const persistedQueryHash = "c47fd42345af268616d2d8904b56856acdc05cf61d3650380f539ad7d596ac0c";
-    const response = await GraphQL.query(operationName, persistedQueryHash, { username });
-    return response.data?.redditorInfoByName?.snoovatarIcon?.url;
+    const response = await getRedditApiPlugins().Users.GetSnoovatarUrl({ username }, context.metadata);
+    return response.url || void 0;
   }
   /** @internal */
   static getOverview(options) {
@@ -86280,9 +86213,10 @@ var Comment2 = class {
     __classPrivateFieldSet9(this, _Comment_approved, false, "f");
   }
   /**
-   * Filters the comment. When a comment is filtered, it is added to the ModQueue for review, and in addition:
-   * - if @param options.keep is `false`, the comment stops being in displayed the subreddit
-   * - if @param options.keep is `true`, the comment is still displayed in the subreddit
+   * Filters the comment. When a comment is filtered, it is added to the ModQueue for review. By
+   * default, filtered comments are hidden while in the queue. Set `keep` to `true` to keep the
+   * comment visible. Set `reason` to show moderators a reason; when `keep` is `true`, the reason
+   * is also shown on the comment.
    *
    * @experimental
    */
@@ -87385,9 +87319,12 @@ var ModMailService = class {
     return await client.UnreadCount({}, __classPrivateFieldGet16(this, _ModMailService_instances, "a", _ModMailService_metadata_get));
   }
   /**
-   * Returns recent posts, comments and modmail conversations for a given user.
+   * Returns account and moderation information for the user participant of a modmail
+   * conversation, including their recent posts, comments, and modmail conversations
+   * in the same subreddit.
    *
-   * @param conversationId Id of a modmail conversation
+   * @param conversationId ID of a modmail conversation with a user participant.
+   * @throws If the conversation does not have a user participant.
    *
    * @example
    * ```ts
@@ -87611,18 +87548,16 @@ var Rule = class _Rule {
     _Rule_subredditName.set(this, void 0);
     makeGettersEnumerable(this);
     const shortName = ruleData.shortName;
-    const description = ruleData.description;
+    const description = ruleData.description ?? "";
     const priority = ruleData.priority;
     const createdUtc = ruleData.createdUtc;
-    const descriptionHtml = ruleData.descriptionHtml;
+    const descriptionHtml = ruleData.descriptionHtml ?? "";
     if (!isKind(ruleData.kind)) {
       throw new Error(`Invalid kind: ${ruleData.kind}`);
     }
     assertNonNull(shortName, "Subreddit rule is missing shortName");
-    assertNonNull(description, "Subreddit rule is missing description");
     assertNonNull(priority, "Subreddit rule is missing priority");
     assertNonNull(createdUtc, "Subreddit rule is missing createdUtc");
-    assertNonNull(descriptionHtml, "Subreddit rule is missing descriptionHtml");
     __classPrivateFieldSet11(this, _Rule_shortName, shortName, "f");
     __classPrivateFieldSet11(this, _Rule_description, description, "f");
     __classPrivateFieldSet11(this, _Rule_kind, ruleData.kind, "f");
@@ -87640,6 +87575,7 @@ var Rule = class _Rule {
   }
   /**
    * The full description of the rule. This appears on your subreddit's sidebar.
+   * Defaults to an empty string when no description is provided.
    */
   get description() {
     return __classPrivateFieldGet18(this, _Rule_description, "f");
@@ -87668,6 +87604,9 @@ var Rule = class _Rule {
   get createdUtc() {
     return __classPrivateFieldGet18(this, _Rule_createdUtc, "f");
   }
+  /**
+   * The HTML description of the rule, or an empty string when none is provided.
+   */
   get descriptionHtml() {
     return __classPrivateFieldGet18(this, _Rule_descriptionHtml, "f");
   }
@@ -87726,13 +87665,10 @@ var Rule = class _Rule {
     if (options.shortName === "") {
       throw new Error("Short name cannot be empty");
     }
-    if (options.description === "") {
-      throw new Error("Description cannot be empty");
-    }
     const client = getRedditApiPlugins().Subreddits;
     await client.AddSubredditRule({
       r: subredditName,
-      description: options.description,
+      description: options.description ?? "",
       kind: options.kind,
       shortName: options.shortName,
       violationReason: options.violationReason ?? ""
@@ -90332,7 +90268,7 @@ var RedditClient = class {
    * ```
    */
   async getCurrentUsername() {
-    return (await this.getCurrentUser())?.username;
+    return context.username;
   }
   /**
    * Get the current calling user.
@@ -90376,7 +90312,8 @@ var RedditClient = class {
    * Get the snoovatar URL for a given username.
    *
    * @param username - The username of the snoovatar to retrieve
-   * @returns A Promise that resolves to a URL of the snoovatar image if it exists.
+   * @returns The image URL, or `undefined` if the user has no Snoovatar image.
+   * @throws If the account is unavailable or the lookup fails.
    */
   async getSnoovatarUrl(username) {
     return User2.getSnoovatarUrl(username);
@@ -91092,9 +91029,10 @@ var RedditClient = class {
     throw new Error("id must start with either t1_ or t3_");
   }
   /**
-   * Filters a post or comment. When a post or comment is filtered, it is added to the ModQueue for review, and in addition:
-   * - if @param options.keep is `false`, the post/comment stops being in displayed the subreddit
-   * - if @param options.keep is `true`, the post/comment is still displayed in the subreddit
+   * Filters a post or comment. When a post or comment is filtered, it is added to the ModQueue for
+   * review. By default, filtered content is hidden while in the queue. Set `keep` to `true` to keep
+   * the content visible. Set `reason` to show moderators a reason; when `keep` is `true`, the
+   * reason is also shown on the content.
    *
    * @param id - The id of the post (t3_) or comment (t1_) to filter.
    * @param options - The options for this filter action.

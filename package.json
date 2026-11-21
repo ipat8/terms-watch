@@ -12,7 +12,7 @@
     "launch": "devvit publish"
   },
   "dependencies": {
-    "@devvit/web": "0.15.0"
+    "@devvit/web": "^0.15.4"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
